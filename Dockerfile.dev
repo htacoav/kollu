@@ -1,0 +1,16 @@
+# Dev image for the KOLLU landing (Vite + React + react-three-fiber)
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install deps first for better layer caching
+COPY package.json ./
+RUN npm install
+
+# App source (overlaid by a bind mount in docker-compose for hot reload)
+COPY . .
+
+EXPOSE 5173
+
+# --host is already set in the npm script; poll-based watching is set in vite.config.js
+CMD ["npm", "run", "dev"]

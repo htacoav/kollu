@@ -1,0 +1,34 @@
+# Producción en el VPS.
+#   Con Caddy (HTTPS automático, si los puertos 80/443 están libres):
+#     docker compose -f docker-compose.prod.yml --profile proxy up -d --build
+#   Detrás de un nginx que ya existe en el VPS:
+#     docker compose -f docker-compose.prod.yml up -d --build   (sirve en 127.0.0.1:8085)
+services:
+  web:
+    build: .
+    image: kollu-web:latest
+    container_name: kollu-prod
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8085:80"
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: kollu-caddy
+    profiles: ["proxy"]
+    restart: unless-stopped
+    depends_on: [web]
+    environment:
+      - DOMAIN=${DOMAIN:-kollu.kamai.life}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
